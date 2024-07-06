@@ -36,8 +36,9 @@ function onMessage(event) {
     var sensorData = JSON.parse(event.data);
 
     // Atualiza os valores formatados no HTML
-    document.getElementById('tamanho').innerText = `carregado ${sensorData.temperature} C`;
-    document.getElementById('falta').innerText = `de ${sensorData.humidity} %`;
+    document.getElementById('tamanho').innerText = `carregado ${sensorData.tamanho} C`;
+    document.getElementById('falta').innerText = `de ${sensorData.falta} %`;
     document.getElementById('img').src = sensorData.img;
+
 
 }

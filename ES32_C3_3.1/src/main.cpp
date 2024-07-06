@@ -36,9 +36,10 @@ int melody[] = {  // doom
 };
 
 // DADOS PARA CONTROLE DE FLUXO
- String filename = "/img.jpg";
+ String filename = "/img.bmp";
  int packtes = 0; // quantidade de paquetes que ira receber
  int recebido = 0;// quando recebe algum pacote 
+ String hexString = ""; // variavel para guardar dados em exa
 
  int soma =0;
  int imgs = 0;
@@ -80,6 +81,11 @@ void display_init();
 void writeFile(String path, String message, const char* modo);
 String ajustarString(String input);
 void atualizar();
+// funçoes de teste abaixo
+void encoders();
+void decoders(String hexString);
+
+
 
 
 void setup() {
@@ -93,24 +99,73 @@ void setup() {
 
    Serial.println("iniciado...");
 
-
+   Serial1.readString();
 }
 
 void loop() {
 
+  // tesde de encoder e decoder 
+  //--------------------------------------------------------
+
+//delay(5000);
+//encoders();
+//delay(1000);
+//decoders();
+
+//if ((millis() - lastTime) > timerDelay) {
+    //String sensorReadings = getSensorReadings(); // atualiza a imagem
+   // notifyClients(sensorReadings);
+   // lastTime = millis(); 
+
+ // }
+ // ws.cleanupClients();
+  
+
+
+  //--------------------------------------------------------
+
  String loraDados;
-
-
  if(Serial1.available()>0)
   { 
-    Serial1.readString();
-    delay(100);
-    String tamanhos =  Serial1.readString();
+   
+    delay(300);
+    String tamanhos;
+    while(Serial1.available())
+    {
+      char c = Serial1.read();
 
+      if(c == '0')
+      tamanhos += c;
+      if(c == '1')
+      tamanhos += c;
+      if(c == '2')
+      tamanhos += c;
+      if(c == '3')
+      tamanhos += c;
+      if(c == '4')
+      tamanhos += c;
+      if(c == '5')
+      tamanhos += c;
+      if(c == '6')
+      tamanhos += c;
+      if(c == '7')
+      tamanhos += c;
+      if(c == '8')
+      tamanhos += c;
+      if(c == '9')
+      tamanhos += c;
+      if(c == ' ')
+      tamanhos += c;
+       if(c == '\r')
+      tamanhos += c;
+       if(c == '\n')
+      tamanhos += c;
 
+    }
+
+   
     Serial.println("recebido tamanho: "+tamanhos );
     packtes = tamanhos.toInt();
-     
 
     display.clearDisplay();
     display.setTextSize(1); 
@@ -144,7 +199,8 @@ void loop() {
     }
      packtes = 0;
      recebido = 0;
-    writeFile(filename, loraDados , "w");// sobrescreve
+    //writeFile(filename, loraDados , "w");// sobrescreve
+    decoders(loraDados);
     Serial.println("escrito na memoria");
     tocar();
 
@@ -166,10 +222,32 @@ void loop() {
 
 // Get Sensor Readings and return JSON object
 String getSensorReadings(){
+
+
+String images;// VARIAVEIS PARA DADOS
+File rFile = SPIFFS.open("/zelda2.bmp", "r");
+  
+  if(!rFile)
+  {
+    Serial.println(" falha ao abrir arquivo");
+  }
+  else 
+  {
+    while (rFile.available()) 
+    {
+      images += rFile.read();
+    }
+    Serial.println("log lidos com susesso: ");
+  }
+  
+  rFile.close();
+ 
+ 
+
   DynamicJsonDocument doc(1024);
-  doc["tamanho"] = String(soma++);
-  doc["falta"] =  String(soma++);
-  doc["img"] = "img.jpg";
+  doc["tamanho"] = images;
+  doc["falta"] =  "decodificado";
+  doc["img"] = "zelda2.bmp";
   
   String jsonString;
   serializeJson(doc, jsonString);
@@ -388,3 +466,55 @@ void atualizar(){
 
 
 }
+
+
+
+void encoders(){
+
+File file = SPIFFS.open("/zelda.bmp", FILE_READ);
+  if (!file) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  hexString = "";
+  while (file.available()) {
+    uint8_t byte = file.read();
+    char hex[3];
+    sprintf(hex, "%02X", byte);
+    hexString += hex;
+  }
+  file.close();
+
+  // Envia a string hexadecimal via serial
+  //Serial.println(hexString);
+
+    display.clearDisplay();
+    display.setTextSize(1); 
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
+    display.println(ajustarString("foi codificado...")); // ajusta
+    display.display();// mosta o texto ajustado 
+
+}
+
+
+void decoders(String hexString){
+  
+   
+    File file = SPIFFS.open("/zelda2.bmp", FILE_WRITE);
+    if (!file) {
+      Serial.println("Failed to open file for writing");
+      return;
+    }
+
+    for (int i = 0; i < hexString.length(); i += 2) {
+      String hexByte = hexString.substring(i, i + 2);
+      char byte = strtol(hexByte.c_str(), NULL, 16);
+      file.write(byte);
+    }
+    file.close();
+    Serial.println("Image received and saved.");
+  
+}
+
